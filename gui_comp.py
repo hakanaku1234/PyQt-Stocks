@@ -30,7 +30,9 @@ class popup4(QWidget):   ##Company editing
 class popup5(QWidget):   ## add a company button
     def __init__(self):
         QWidget.__init__(self)
-
+class popup6(QWidget):   ## add a company button
+    def __init__(self):
+        QWidget.__init__(self)
 class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
@@ -64,7 +66,7 @@ class MainWindow(QMainWindow):
 
         # Create ComboBox for Company
         self.comboBox = QComboBox(self)
-        self.comboBox.addItem("")
+        self.comboBox.addItem("Select Company")
 
         ## Adds the company names to the ComboBox ######################
         curs.execute("SELECT * FROM COMPANY")
@@ -85,7 +87,7 @@ class MainWindow(QMainWindow):
 
         # Create ComboBox for Sector
         self.comboBox2 = QComboBox(self)
-        self.comboBox2.addItem("")
+        self.comboBox2.addItem("Select Sector")
 
         ## Adds the Sector names to the ComboBox ######################
         curs.execute("SELECT * FROM SECTOR")
@@ -119,12 +121,12 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(screen)
 
     def turnoncompany(self):
-        if self.comboBox.currentText() != "":
+        if self.comboBox.currentText() != "Select Company":
             self.btn4.setEnabled(True)
         else:
             self.btn4.setEnabled(False)
     def turnonsector(self):
-        if self.comboBox2.currentText() != "":
+        if self.comboBox2.currentText() != "Select Sector":
             self.btn5.setEnabled(True)
         else:
             self.btn5.setEnabled(False)
@@ -211,17 +213,24 @@ class MainWindow(QMainWindow):
         content.addLayout(line2)
         content.addLayout(line3)
         content.addLayout(line4)
+        content.addLayout(line7)
         content.addLayout(line5)
         content.addLayout(line6)
-        content.addLayout(line7)
-
+        
         self.w = popup()
         self.w.setGeometry(800,200,400,500)
         self.w.setWindowTitle("Company Information")
 
         self.w.setLayout(content)
         self.w.show()
-
+    def refresh_company(self):
+        conn = sqlite3.connect('company.db')
+        curs = conn.cursor()
+        self.comboBox.clear()
+        curs.execute("SELECT * FROM COMPANY")
+        for data in curs:
+            compn = data[1]
+            self.comboBox.addItem(str(compn))
     def showsector(self):
         sector_name = self.comboBox2.currentText()
 
@@ -250,7 +259,17 @@ class MainWindow(QMainWindow):
         self.v.setWindowTitle("Sector")
         self.v.setLayout(content)
         self.v.show()
-
+    
+    def turnonedit(self):
+        if self.comboBox3.currentText() != "":
+            self.okbtne.setEnabled(True)
+        else:
+            self.okbtne.setEnabled(False)
+    def turnonnew(self):
+        if self.comboBox4.currentText() != "":
+            self.okbtna.setEnabled(True)
+        else:
+            self.okbtna.setEnabled(False)
 
     def editor(self):
         conn = sqlite3.connect('company.db')
@@ -279,8 +298,6 @@ class MainWindow(QMainWindow):
         self.e2 = QLineEdit()
         self.e2.setText(ticker)
         line2.addWidget(self.e2)
-        # e2.textChanged.connect(self.textc)
-        #e2.setText(e2.text())
 
         line3 = QHBoxLayout()
         l3 = QLabel()
@@ -301,8 +318,8 @@ class MainWindow(QMainWindow):
             sicc = data[0]
             sectorn = data[1]
             self.comboBox3.addItem(str(sectorn)+" ("+str(sicc)+")")
+        
         line4.addWidget(self.comboBox3)
-
         line5 = QHBoxLayout()
         l5 = QLabel()
         l5.setText("Address 1:  ")
@@ -344,11 +361,13 @@ class MainWindow(QMainWindow):
         line9.addWidget(self.e9)
 
         line10 = QHBoxLayout()
-        okbtn = QPushButton("Ok",self)
+        self.okbtne = QPushButton("Ok",self)
+        self.okbtne.setEnabled(False)
+        self.comboBox3.activated[str].connect(self.turnonedit)
         cancel = QPushButton("Cancel", self)
-        okbtn.clicked.connect(self.okc)
+        self.okbtne.clicked.connect(self.okc)
         cancel.clicked.connect(self.canc)
-        line10.addWidget(okbtn)
+        line10.addWidget(self.okbtne)
         line10.addWidget(cancel)
         # Need to add the OK and Cancel Buttons
 
@@ -369,7 +388,7 @@ class MainWindow(QMainWindow):
         self.y.setLayout(content)
         self.y.show()
 
-    def okc(self): # if user clicks ok, retrieve text from QLINesEdits and commit to the DB
+    def okc(self):
         company_name = self.comboBox.currentText()
         ticker = self.e2.text()
         name = self.e3.text()
@@ -385,12 +404,148 @@ class MainWindow(QMainWindow):
 
         curs.execute(f"UPDATE COMPANY SET ticker=\'{ticker}\', sic=\'{sic}\', addr1=\'{addr1}\',  addr2=\'{addr2}\',  city=\'{city}\',  state=\'{state}\',  zip=\'{zipp}\', name=\'{name}\' where name=\'{company_name}\'")
         conn.commit()
+        self.y.close()
+        self.w.close()
 
     def canc(self):
         self.y.close()
 
+    def okc2(self):
+    	ticker = self.e22.text()
+    	name = self.e33.text()
+    	sic = self.comboBox4.currentText()[len(self.comboBox4.currentText())-5:len(self.comboBox4.currentText())-1]
+    	addr1 = self.e55.text()
+    	addr2 = self.e66.text()
+    	city = self.e77.text()
+    	state = self.e88.text()
+    	zipp = self.e99.text()
+
+    	conn = sqlite3.connect('company.db')
+    	curs = conn.cursor()
+
+    	params = (ticker, name, sic, addr1, addr2, city, state, zipp)
+    	try:
+    		curs.execute(f"INSERT INTO COMPANY VALUES(?, ?, ?, ?, ?, ?, ?, ?)", params)
+    		conn.commit()
+    		self.p.close()
+    	except:
+    		self.h = popup6()
+    		self.h.setGeometry(800,350,400,200)
+    		self.h.setWindowTitle("Error Message") 		
+    		tag = QLabel()
+    		tag.setText("Company is already in the database")
+    		content = QHBoxLayout()
+    		content.addWidget(tag)
+    		self.h.setLayout(content)
+    		self.h.show()
+    def canc2(self):
+        self.p.close()
+        #MainWindow.close()
+        #MainWindow.show()
+# DO i need to make the new comp show up without restarting????
     def addcomp(self):
-        pass
+        conn = sqlite3.connect('company.db')
+        curs = conn.cursor()
+
+        company_name = self.comboBox.currentText()
+
+        line1 = QHBoxLayout()
+        filler = QLabel()
+        filler.setText("After entering information, click OK to save changes. Click cancel to abort. Make sure to select a SIC from the drop-down!")
+        line1.addWidget(filler)
+
+
+        line2 = QHBoxLayout()
+        l2 = QLabel()
+        l2.setText("Ticker:  ")
+        line2.addWidget(l2)
+        self.e22 = QLineEdit()
+        line2.addWidget(self.e22)
+
+        line3 = QHBoxLayout()
+        l3 = QLabel()
+        l3.setText("Name:  ")
+        line3.addWidget(l3)
+        self.e33 = QLineEdit()
+        line3.addWidget(self.e33)
+
+        line4 = QHBoxLayout()
+        l4 = QLabel()
+        l4.setText("SIC:  ")
+        line4.addWidget(l4)
+        self.comboBox4 = QComboBox()
+        self.comboBox4.addItem("")
+        curs.execute("SELECT * FROM SECTOR")
+        for data in curs:
+            sicc = data[0]
+            sectorn = data[1]
+            self.comboBox4.addItem(str(sectorn)+" ("+str(sicc)+")")
+        line4.addWidget(self.comboBox4)
+
+        line5 = QHBoxLayout()
+        l5 = QLabel()
+        l5.setText("Address 1:  ")
+        line5.addWidget(l5)
+        self.e55 = QLineEdit()
+        line5.addWidget(self.e55)
+
+        line6 = QHBoxLayout()
+        l6 = QLabel()
+        l6.setText("Address 2:  ")
+        line6.addWidget(l6)
+        self.e66 = QLineEdit()
+        line6.addWidget(self.e66)
+
+        line7 = QHBoxLayout()
+        l7 = QLabel()
+        l7.setText("City:  ")
+        line7.addWidget(l7)
+        self.e77 = QLineEdit()
+        line7.addWidget(self.e77)
+
+        line8 = QHBoxLayout()
+        l8 = QLabel()
+        l8.setText("State:  ")
+        line8.addWidget(l8)
+        self.e88 = QLineEdit()
+        line8.addWidget(self.e88)
+
+        line9 = QHBoxLayout()
+        l9 = QLabel()
+        l9.setText("Zip:  ")
+        line9.addWidget(l9)
+        self.e99 = QLineEdit()
+        line9.addWidget(self.e99)
+
+        line10 = QHBoxLayout()
+        self.okbtna = QPushButton("Ok",self)
+        cancel = QPushButton("Cancel", self)
+        self.okbtna.setEnabled(False)
+        self.okbtna.clicked.connect(self.okc2)
+        self.okbtna.clicked.connect(self.refresh_company)
+        self.comboBox4.activated[str].connect(self.turnonnew)
+        cancel.clicked.connect(self.canc2)
+        line10.addWidget(self.okbtna)
+        line10.addWidget(cancel)
+        # Need to add the OK and Cancel Buttons
+
+        content = QVBoxLayout()
+        content.addLayout(line1)
+        content.addLayout(line2)
+        content.addLayout(line3)
+        content.addLayout(line4)
+        content.addLayout(line5)
+        content.addLayout(line6)
+        content.addLayout(line7)
+        content.addLayout(line8)
+        content.addLayout(line9)
+        content.addLayout(line10)
+  
+        self.p = popup5()
+        self.p.setGeometry(400,400,400,200)
+        self.p.setWindowTitle("Add a New Company")
+        self.p.setLayout(content)
+        self.p.show()
 
     def btn3f(self):
         conn = sqlite3.connect('company.db')
