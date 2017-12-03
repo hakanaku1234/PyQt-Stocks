@@ -1,7 +1,3 @@
-#GTID 903246579
-#gquintas3
-#Gabriel Quintas
-
 import sqlite3
 import sys
 from PyQt5.QtWidgets import *
